@@ -3,17 +3,25 @@ package ingore.sangee.ingorelib;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
-import android.hardware.Sensor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import bullyfox.sangeeth.testube.component.DataRack;
 import bullyfox.sangeeth.testube.managers.AppSettings;
@@ -26,7 +34,6 @@ import github.nisrulz.easydeviceinfo.base.EasyDisplayMod;
 import github.nisrulz.easydeviceinfo.base.EasyFingerprintMod;
 import github.nisrulz.easydeviceinfo.base.EasyMemoryMod;
 import github.nisrulz.easydeviceinfo.base.EasyNetworkMod;
-import github.nisrulz.easydeviceinfo.base.EasySensorMod;
 import github.nisrulz.easydeviceinfo.base.EasySimMod;
 import github.nisrulz.easydeviceinfo.base.NetworkType;
 
@@ -34,18 +41,15 @@ import github.nisrulz.easydeviceinfo.base.NetworkType;
  * Created by Sangee's Lap on 3/10/2018.
  */
 
-public class Ingore {
+public class Ingore
+{
     Context context;
     Activity activity;
-    String USER_ID,APP_ID,DEVICE_ID;
+    String APP_ID,DEVICE_ID;
     List<DataRack> rack;
     AppSettings settings;
     int count=0;
 
-    //Configs
-        //UPDATES
-        boolean reportUpdate=true;
-        boolean forceUpdate=false;
 
     public Ingore(Context context, Activity activity) {
         this.context = context;
@@ -69,15 +73,7 @@ public class Ingore {
     }
 
 
-    //INGORE CONFIGS
-    public void setUpdateReporter(boolean reportUpdate)
-    {
-        this.reportUpdate=reportUpdate;
-    }
-    public void setForceUpdate(boolean forceUpdate)
-    {
-        this.forceUpdate=forceUpdate;
-    }
+
 
 
     // INGORE CORE CALLS
@@ -87,12 +83,14 @@ public class Ingore {
 
     public void registerEvent(String name,String value)
     {
+        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
         List<DataRack> eventrack=new ArrayList<>();
         eventrack.add(new DataRack("DeviceID",DEVICE_ID));
         eventrack.add(new DataRack("AppID",APP_ID));
         eventrack.add(new DataRack("EventName",name));
         eventrack.add(new DataRack("EventValue",value));
         eventrack.add(new DataRack("Flags","not_set"));
+        eventrack.add(new DataRack("Date",date));
         WebServer server=new WebServer(context);
         server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
             @Override
@@ -108,16 +106,76 @@ public class Ingore {
         server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regevents.php",eventrack);
     }
 
+    public void checkforUpdate()
+    {
+        WebServer server=new WebServer(context);
+        server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+            @Override
+            public void onServerResponded(String s) {
+                Gson gson=new Gson();
+                List<Update> updates = gson.fromJson(s, new TypeToken<List<Update>>(){}.getType());
+
+                //CHECK IF A NEWER UPDATE
+                EasyAppMod easyAppMod = new EasyAppMod(context);
+                double currentVersion=Double.parseDouble(easyAppMod.getAppVersionCode());
+                double foundVersion=Double.parseDouble(updates.get(0).latestVersion);
+                if (currentVersion<foundVersion)
+                {
+                    if (updates.get(0).criticalUpdate.equals("true"))
+                    {
+                        updatePrompt(updates.get(0).changeLog,updates.get(0).updateLink,true);
+                    }
+                    else
+                    {
+                        updatePrompt(updates.get(0).changeLog,updates.get(0).updateLink,false);
+                    }
+                }
+            }
+
+            @Override
+            public void onServerRevoked() {
+
+            }
+        });
+        server.connectWithGET("http://ingore.sangeethnandakumar.com/getupdates.php?AppID="+APP_ID);
+    }
+
+
+
+
 
     //INGORE UI
-    private void signinPrompt()
+    private void updatePrompt(String changeLog, final String Url, boolean critical)
     {
-        Dialog ask=new Dialog(activity);
-        ask.setCancelable(false);
-        ask.setContentView(R.layout.signin_prompt);
-        Window window = ask.getWindow();
+        Dialog update=new Dialog(activity);
+
+        if(critical)
+        {
+            update.setCancelable(false);
+        }
+        else
+        {
+            update.setCancelable(true);
+        }
+
+        update.setContentView(R.layout.update_prompt);
+        Window window = update.getWindow();
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
-        ask.show();
+
+        TextView changelog=(TextView)update.findViewById(R.id.changelog);
+        Button updatenow=(Button)update.findViewById(R.id.updatenow);
+
+        changelog.setText(changeLog);
+         updatenow.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(Url));
+                activity.startActivity(i);
+            }
+        });
+
+        update.show();
     }
 
     private void bugPrompt()
@@ -143,7 +201,7 @@ public class Ingore {
 
 
 
-
+    //INGORE ANELETIC SERVICE MODULES
     private void isFingerprint()
     {
         EasyFingerprintMod easyFingerprintMod = new EasyFingerprintMod(context);
@@ -154,7 +212,8 @@ public class Ingore {
     private void getConfigs()
     {
         EasyConfigMod easyConfigMod = new EasyConfigMod(context);
-        rack.add(new DataRack("CurrentDate", String.valueOf(easyConfigMod.getCurrentDate().getTime())));
+        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
+        rack.add(new DataRack("CurrentDate", date));
         rack.add(new DataRack("IsSDCard", String.valueOf(easyConfigMod.hasSdCard())));
         getNetwork();
     }

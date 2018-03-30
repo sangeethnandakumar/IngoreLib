@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">IngoreLib</string>
-    <string name="signin_desc">SignIn with your google account to get started with all personalisations</string>
+    <string name="signin_desc">
+        Updating your app gives extra stability and more security to your datas. Here are the major changelog of latest version
+    </string>
     <string name="bug_desc">A bug is what makes an app crash. Report what steps you followed to discover this bug, So that it reaches the developer and he can fix it up next update</string>
     <string name="future_desc">Have a great idea to integrate with this app? Give your suggestions directly to the developer</string>
 
