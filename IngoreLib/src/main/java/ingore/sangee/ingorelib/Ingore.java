@@ -11,13 +11,16 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -57,7 +60,8 @@ public class Ingore
         settings=new AppSettings(context);
         rack=new ArrayList<>();
 
-        try {
+        try
+        {
             ApplicationInfo ai = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
             Bundle bundle = ai.metaData;
             //GET AppID
@@ -95,7 +99,6 @@ public class Ingore
         server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
             @Override
             public void onServerResponded(String s) {
-                Toast.makeText(context, s, Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -106,29 +109,37 @@ public class Ingore
         server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regevents.php",eventrack);
     }
 
-    public void checkforUpdate()
+    public void invokeUpdatePrompt()
     {
         WebServer server=new WebServer(context);
         server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
             @Override
-            public void onServerResponded(String s) {
-                Gson gson=new Gson();
-                List<Update> updates = gson.fromJson(s, new TypeToken<List<Update>>(){}.getType());
-
-                //CHECK IF A NEWER UPDATE
-                EasyAppMod easyAppMod = new EasyAppMod(context);
-                double currentVersion=Double.parseDouble(easyAppMod.getAppVersionCode());
-                double foundVersion=Double.parseDouble(updates.get(0).latestVersion);
-                if (currentVersion<foundVersion)
+            public void onServerResponded(String s)
+            {
+                try
                 {
-                    if (updates.get(0).criticalUpdate.equals("true"))
+                    Gson gson=new Gson();
+                    List<Update> updates = gson.fromJson(s, new TypeToken<List<Update>>(){}.getType());
+
+                    //CHECK IF A NEWER UPDATE
+                    EasyAppMod easyAppMod = new EasyAppMod(context);
+                    double currentVersion=Double.parseDouble(easyAppMod.getAppVersionCode());
+                    double foundVersion=Double.parseDouble(updates.get(0).latestVersion);
+                    if (currentVersion<foundVersion)
                     {
-                        updatePrompt(updates.get(0).changeLog,updates.get(0).updateLink,true);
+                        if (updates.get(0).criticalUpdate.equals("true"))
+                        {
+                            updatePrompt(updates.get(0).changeLog,updates.get(0).updateLink,true);
+                        }
+                        else
+                        {
+                            updatePrompt(updates.get(0).changeLog,updates.get(0).updateLink,false);
+                        }
                     }
-                    else
-                    {
-                        updatePrompt(updates.get(0).changeLog,updates.get(0).updateLink,false);
-                    }
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
                 }
             }
 
@@ -140,7 +151,38 @@ public class Ingore
         server.connectWithGET("http://ingore.sangeethnandakumar.com/getupdates.php?AppID="+APP_ID);
     }
 
+    public void invokeFuturePrompt()
+    {
+        futurePrompt();
+    }
 
+    public void invokeBugPrompt(Exception exception)
+    {
+        String stackTrace = Log.getStackTraceString(exception);
+        bugPrompt(stackTrace);
+    }
+
+    public void invokeRateOnPlaystore(String request)
+    {
+        rateAndReview(request);
+    }
+
+    public int getAppSessionCount()
+    {
+        return count;
+    }
+
+    public void tweekConfig_dontShowRateAndReview(boolean key)
+    {
+        if (key)
+        {
+            settings.saveSettings("dontShowRateAndReview","true");
+        }
+        else
+        {
+            settings.saveSettings("dontShowRateAndReview","false");
+        }
+    }
 
 
 
@@ -178,30 +220,136 @@ public class Ingore
         update.show();
     }
 
-    private void bugPrompt()
+    private void bugPrompt(final String stacktrace)
     {
-        Dialog ask=new Dialog(activity);
+        final Dialog ask=new Dialog(activity);
         ask.setCancelable(true);
         ask.setContentView(R.layout.bug_prompt);
         Window window = ask.getWindow();
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+
+        Button send=(Button)ask.findViewById(R.id.send);
+
+        send.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                WebServer server=new WebServer(context);
+                server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+                    @Override
+                    public void onServerResponded(String s) {
+                    }
+
+                    @Override
+                    public void onServerRevoked() {
+
+                    }
+                });
+                List<DataRack> racks=new ArrayList<>();
+                EditText steps=(EditText)ask.findViewById(R.id.steps);
+                EasyAppMod easyAppMod = new EasyAppMod(context);
+                String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
+                racks.add(new DataRack("DeviceID",DEVICE_ID));
+                racks.add(new DataRack("AppID",APP_ID));
+                racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
+                racks.add(new DataRack("Timestamp",date));
+                racks.add(new DataRack("Stacktrace",stacktrace));
+                racks.add(new DataRack("Steps",steps.getText().toString()));
+                server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regbug.php",racks);
+                ask.dismiss();
+            }
+        });
+
         ask.show();
     }
 
     private void futurePrompt()
     {
-        Dialog ask=new Dialog(activity);
+        final Dialog ask=new Dialog(activity);
         ask.setCancelable(true);
         ask.setContentView(R.layout.future_prompt);
         Window window = ask.getWindow();
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+        Button send=(Button)ask.findViewById(R.id.send);
+
+        send.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                WebServer server=new WebServer(context);
+                server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+                    @Override
+                    public void onServerResponded(String s) {
+                    }
+
+                    @Override
+                    public void onServerRevoked() {
+
+                    }
+                });
+                List<DataRack> racks=new ArrayList<>();
+                EditText suggestion=(EditText)ask.findViewById(R.id.suggestion);
+                EasyAppMod easyAppMod = new EasyAppMod(context);
+                String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
+                racks.add(new DataRack("DeviceID",DEVICE_ID));
+                racks.add(new DataRack("AppID",APP_ID));
+                racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
+                racks.add(new DataRack("Message",suggestion.getText().toString()));
+                racks.add(new DataRack("Timestamp",date));
+                server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regfeature.php",racks);
+                ask.dismiss();
+            }
+        });
+
+
         ask.show();
     }
 
-
-
+    private void rateAndReview(String request)
+    {
+        if (!settings.retriveSettings("dontShowRateAndReview").equals("true"))
+        {
+            final Dialog ask=new Dialog(activity);
+            ask.setCancelable(true);
+            ask.setContentView(R.layout.rating_prompt);
+            Window window = ask.getWindow();
+            window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+            Button rate=(Button)ask.findViewById(R.id.ratenow);
+            TextView ratetext=(TextView)ask.findViewById(R.id.ratetext);
+            TextView dontshow=(TextView)ask.findViewById(R.id.dontshow);
+            ratetext.setText(request);
+            dontshow.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    settings.saveSettings("dontShowRateAndReview","true");
+                    ask.dismiss();
+                }
+            });
+            rate.setOnClickListener(new View.OnClickListener()
+            {
+                @Override
+                public void onClick(View view)
+                {
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setData(Uri.parse(getPlayLink()));
+                    activity.startActivity(i);
+                }
+            });
+            ask.show();
+        }
+    }
 
     //INGORE ANELETIC SERVICE MODULES
+    private String getPlayLink()
+    {
+        EasyAppMod easyAppMod = new EasyAppMod(context);
+        String playlink="https://play.google.com/store/apps/details?id="+easyAppMod.getPackageName();
+        return playlink;
+    }
+
+
     private void isFingerprint()
     {
         EasyFingerprintMod easyFingerprintMod = new EasyFingerprintMod(context);

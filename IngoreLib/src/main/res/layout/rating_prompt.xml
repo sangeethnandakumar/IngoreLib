@@ -12,42 +12,29 @@
         android:layout_height="wrap_content">
         <LinearLayout
             android:layout_marginTop="10dp"
-            android:weightSum="2"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
             <ImageView
                 android:layout_gravity="center"
                 android:id="@+id/imageView"
                 android:layout_width="35dp"
-                android:layout_height="35dp"
+                android:layout_height="85dp"
                 android:layout_weight="0.25"
-                android:src="@drawable/play" />
-            <TextView
-                android:layout_gravity="center"
-                android:layout_weight="1.75"
-                android:id="@+id/textView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="8dp"
-                android:layout_marginEnd="8dp"
-                android:layout_marginStart="8dp"
-                android:layout_marginTop="8dp"
-                android:text="New Update Available"
-                android:textSize="18dp"/>
+                android:src="@drawable/rating" />
         </LinearLayout>
         <TextView
+            android:gravity="center"
             android:id="@+id/updatetext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:text="@string/signin_desc" />
+            android:text="It will be helpfull for others if you take a second to rate and review this app on Google Play" />
 
         <TextView
-            android:id="@+id/changelog"
+            android:id="@+id/ratetext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
@@ -55,23 +42,31 @@
             android:layout_marginTop="8dp"
             android:background="@null"
             android:fontFamily="@font/arvo"
-            android:hint="Changelog"
+            android:gravity="center"
+            android:hint="From Developer"
             android:inputType="textMultiLine"
             android:singleLine="false"
-            android:text="This update is really cute"
             android:textColor="#000"
             android:textSize="15sp" />
         <Button
-            android:id="@+id/updatenow"
+            android:id="@+id/ratenow"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="10dp"
-            android:background="#1da38a"
-            android:text="UPDATE NOW"
+            android:background="#c7c402"
+            android:text="RATE ON PLAYSTORE"
             android:textColor="#fff" />
+        <TextView
+            android:layout_marginBottom="10dp"
+            android:id="@+id/dontshow"
+            android:layout_marginLeft="16dp"
+            android:text="Don't show again"
+            android:textColor="#0f5cea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
 
