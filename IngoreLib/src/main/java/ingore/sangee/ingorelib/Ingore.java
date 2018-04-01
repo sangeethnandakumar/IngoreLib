@@ -18,9 +18,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -53,7 +51,6 @@ public class Ingore
     AppSettings settings;
     int count=0;
 
-
     public Ingore(Context context, Activity activity) {
         this.context = context;
         this.activity = activity;
@@ -75,7 +72,6 @@ public class Ingore
             e.printStackTrace();
         }
     }
-
 
 
 
@@ -172,6 +168,11 @@ public class Ingore
         return count;
     }
 
+    public void resetAppSessionCount()
+    {
+        count=0;
+    }
+
     public void tweekConfig_dontShowRateAndReview(boolean key)
     {
         if (key)
@@ -182,6 +183,39 @@ public class Ingore
         {
             settings.saveSettings("dontShowRateAndReview","false");
         }
+    }
+
+    public void invokeRateOnPlaystoreOnPrimeIntervals(String request)
+    {
+        if (count>4)
+        {
+            if (isPrime(count))
+            {
+                invokeRateOnPlaystore(request);
+            }
+        }
+    }
+
+
+
+
+    private boolean isPrime(int num)
+    {
+        int temp;
+        boolean isPrime=true;
+        for(int i=2;i<=num/2;i++)
+        {
+            temp=num%i;
+            if(temp==0)
+            {
+                isPrime=false;
+                break;
+            }
+        }
+        if(isPrime)
+            return true;
+        else
+            return false;
     }
 
 
@@ -532,7 +566,6 @@ public class Ingore
 
             @Override
             public void onServerRevoked() {
-                Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show();
             }
         });
         server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regdevices.php",rack);
