@@ -211,6 +211,11 @@ public class Ingore
          updatenow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+                //Create an event that shows user is trying to update
+                EasyAppMod easyAppMod = new EasyAppMod(context);
+                registerEvent("UPDATED_INITIATED_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(Url));
                 activity.startActivity(i);
@@ -235,6 +240,11 @@ public class Ingore
             @Override
             public void onClick(View view)
             {
+
+                //Create an event that shows a bug report is fired
+                EasyAppMod easyAppMod = new EasyAppMod(context);
+                registerEvent("BUG_REPORTED_BY_USER",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+
                 WebServer server=new WebServer(context);
                 server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
                     @Override
@@ -248,7 +258,6 @@ public class Ingore
                 });
                 List<DataRack> racks=new ArrayList<>();
                 EditText steps=(EditText)ask.findViewById(R.id.steps);
-                EasyAppMod easyAppMod = new EasyAppMod(context);
                 String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
                 racks.add(new DataRack("DeviceID",DEVICE_ID));
                 racks.add(new DataRack("AppID",APP_ID));
@@ -278,6 +287,11 @@ public class Ingore
             @Override
             public void onClick(View view)
             {
+
+                //Future prompting
+                EasyAppMod easyAppMod = new EasyAppMod(context);
+                registerEvent("FEATURE_SUGGESTED",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+
                 WebServer server=new WebServer(context);
                 server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
                     @Override
@@ -291,7 +305,6 @@ public class Ingore
                 });
                 List<DataRack> racks=new ArrayList<>();
                 EditText suggestion=(EditText)ask.findViewById(R.id.suggestion);
-                EasyAppMod easyAppMod = new EasyAppMod(context);
                 String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
                 racks.add(new DataRack("DeviceID",DEVICE_ID));
                 racks.add(new DataRack("AppID",APP_ID));
@@ -323,6 +336,11 @@ public class Ingore
             dontshow.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
+
+                    //Rating declined
+                    EasyAppMod easyAppMod = new EasyAppMod(context);
+                    registerEvent("RATING_DONTSHOW_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+
                     settings.saveSettings("dontShowRateAndReview","true");
                     ask.dismiss();
                 }
@@ -332,6 +350,11 @@ public class Ingore
                 @Override
                 public void onClick(View view)
                 {
+
+                    //Rating initiated
+                    EasyAppMod easyAppMod = new EasyAppMod(context);
+                    registerEvent("RATING_INITIATED_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+
                     Intent i = new Intent(Intent.ACTION_VIEW);
                     i.setData(Uri.parse(getPlayLink()));
                     activity.startActivity(i);

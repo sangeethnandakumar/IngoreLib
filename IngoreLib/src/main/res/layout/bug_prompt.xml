@@ -22,11 +22,11 @@
                 android:id="@+id/imageView"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
-                android:layout_weight="0.25"
+                android:layout_weight="0.15"
                 android:src="@drawable/bug" />
             <TextView
                 android:layout_gravity="center"
-                android:layout_weight="1.75"
+                android:layout_weight="1.85"
                 android:id="@+id/textView"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -68,7 +68,7 @@
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="20dp"
             android:background="#e60000"
             android:text="REPORT STEPS"
             android:textColor="#fff" />

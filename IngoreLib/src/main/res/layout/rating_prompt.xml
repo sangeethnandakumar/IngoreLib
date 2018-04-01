@@ -60,7 +60,7 @@
             android:text="RATE ON PLAYSTORE"
             android:textColor="#fff" />
         <TextView
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="20dp"
             android:id="@+id/dontshow"
             android:layout_marginLeft="16dp"
             android:text="Don't show again"
