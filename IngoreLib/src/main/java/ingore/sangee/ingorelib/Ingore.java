@@ -54,7 +54,7 @@ public class Ingore
 {
     Context context;
     Activity activity;
-    String APP_ID,DEVICE_ID;
+    String APP_ID,DEVICE_ID,BASE_URL;
     List<DataRack> rack;
     AppSettings settings;
     int count=0;
@@ -64,7 +64,17 @@ public class Ingore
     private SharedPreferences.Editor editor;
     private int totalCount;
 
-    public Ingore(Context context, Activity activity) {
+    public Ingore(ReportMode mode,Context context, Activity activity) {
+
+        if (mode==ReportMode.DEBUG_MODE)
+        {
+            BASE_URL="http://192.168.43.207/ingore/";
+        }
+        else if (mode==ReportMode.RELEASE_MODE)
+        {
+            BASE_URL="http://ingore.sangeethnandakumar.com/";
+        }
+
         this.context = context;
         this.activity = activity;
         settings=new AppSettings(context);
@@ -87,7 +97,17 @@ public class Ingore
         }
     }
 
-    public Ingore(Context context, Activity activity,String whatsappnumber) {
+    public Ingore(ReportMode mode,Context context, Activity activity,String whatsappnumber) {
+
+        if (mode==ReportMode.DEBUG_MODE)
+        {
+            BASE_URL="http://192.168.43.207/ingore/";
+        }
+        else if (mode==ReportMode.RELEASE_MODE)
+        {
+            BASE_URL="http://ingore.sangeethnandakumar.com/";
+        }
+
         this.whatsappnumber=whatsappnumber;
         this.context = context;
         this.activity = activity;
@@ -152,7 +172,7 @@ public class Ingore
 
             }
         });
-        server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regevents.php",eventrack);
+        server.connectWithPOST(activity,BASE_URL+"regevents.php",eventrack);
     }
 
     public int getAppSessionCount()
@@ -209,7 +229,7 @@ public class Ingore
 
             }
         });
-        server.connectWithGET(context.getString(R.string.baseURL)+"getupdates.php?AppID="+APP_ID);
+        server.connectWithGET(BASE_URL+"getupdates.php?AppID="+APP_ID);
     }
 
     public void invokeFuturePrompt()
@@ -333,7 +353,7 @@ public class Ingore
             @Override
             public void onServerRevoked() {}
         });
-        server.connectWithGET(context.getString(R.string.baseURL)+"getprofile.php?DeviceId="+DEVICE_ID);
+        server.connectWithGET(BASE_URL+"getprofile.php?DeviceId="+DEVICE_ID);
     }
 
     private void uploadProfile(Profile profile)
@@ -354,7 +374,7 @@ public class Ingore
         racks.add(new DataRack("Fname",profile.getFirstname()));
         racks.add(new DataRack("Lname",profile.getLastname()));
         racks.add(new DataRack("Email",profile.getEMail()));
-        server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
+        server.connectWithPOST(activity,BASE_URL+"setprofile.php",racks);
     }
 
     private void checkBlocked()
@@ -378,7 +398,7 @@ public class Ingore
 
             }
         });
-        server.connectWithGET(context.getString(R.string.baseURL)+"getblocks.php?DeviceId="+DEVICE_ID+"&AppId="+APP_ID);
+        server.connectWithGET(BASE_URL+"getblocks.php?DeviceId="+DEVICE_ID+"&AppId="+APP_ID);
     }
 
 
@@ -463,7 +483,7 @@ public class Ingore
                 racks.add(new DataRack("Timestamp",date));
                 racks.add(new DataRack("Stacktrace",stacktrace));
                 racks.add(new DataRack("Steps",steps.getText().toString()));
-                server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regbug.php",racks);
+                server.connectWithPOST(activity,BASE_URL+"regbug.php",racks);
                 ask.dismiss();
             }
         });
@@ -510,7 +530,7 @@ public class Ingore
                     racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
                     racks.add(new DataRack("Message",suggestion.getText().toString()));
                     racks.add(new DataRack("Timestamp",date));
-                    server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regfeature.php",racks);
+                    server.connectWithPOST(activity,BASE_URL+"regfeature.php",racks);
                     ask.dismiss();
                 }
                 else
@@ -659,7 +679,7 @@ public class Ingore
                                 racks.add(new DataRack("Fname",fname.getText().toString()));
                                 racks.add(new DataRack("Lname",lname.getText().toString()));
                                 racks.add(new DataRack("Email",email.getText().toString()));
-                                server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
+                                server.connectWithPOST(activity,BASE_URL+"setprofile.php",racks);
                                 ask.dismiss();
                             }
                             else
@@ -685,7 +705,7 @@ public class Ingore
                             racks.add(new DataRack("Fname",fname.getText().toString()));
                             racks.add(new DataRack("Lname",lname.getText().toString()));
                             racks.add(new DataRack("Email",email.getText().toString()));
-                            server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
+                            server.connectWithPOST(activity,BASE_URL+"setprofile.php",racks);
                             ask.dismiss();
                         }
                     }
@@ -921,6 +941,6 @@ public class Ingore
             public void onServerRevoked() {
             }
         });
-        server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regdevices.php",rack);
+        server.connectWithPOST(activity,BASE_URL+"regdevices.php",rack);
     }
 }

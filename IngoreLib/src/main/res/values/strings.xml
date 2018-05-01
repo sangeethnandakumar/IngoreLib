@@ -1,7 +1,5 @@
 <resources>
-    <string name="baseURL">
-        http://192.168.43.207/ingore/
-    </string>
+
     <string name="app_name">IngoreLib</string>
     <string name="signin_desc">
         Updating your app gives extra stability and more security to your datas. Here are the major changelog of latest version
