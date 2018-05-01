@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:background="#47000000"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <ImageView
+            android:layout_gravity="center"
+            android:id="@+id/imageView"
+            android:layout_width="match_parent"
+            android:layout_height="85dp"
+            android:src="@drawable/poison" />
+        <TextView
+            android:textStyle="bold"
+            android:textColor="#ff3c00"
+            android:gravity="center"
+            android:layout_gravity="center"
+            android:id="@+id/textView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="SORRY YOU ARE BANNED"
+            android:textSize="18dp"/>
+        <TextView
+            android:textSize="12dp"
+            android:textColor="#d4d3d3"
+            android:gravity="center"
+            android:id="@+id/updatetext"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:text="The developer of this application blocks this app from running on this device. The reason for blocking is reported as" />
+
+        <TextView
+            android:textColor="#ffffff"
+            android:gravity="center"
+            android:id="@+id/reason"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:text="No Reason specified" />
+
+        <Button
+            android:id="@+id/contact"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:background="#01a30b"
+            android:text="CONTACT DEVELOPER (WhatsApp)"
+            android:textColor="#fff" />
+        <Button
+            android:id="@+id/close"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="20dp"
+            android:background="#000000"
+            android:text="CLOSE APP"
+            android:textColor="#fff" />
+    </LinearLayout>
+
+
+
+
+</RelativeLayout>

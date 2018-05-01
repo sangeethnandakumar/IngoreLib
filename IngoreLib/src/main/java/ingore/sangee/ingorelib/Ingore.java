@@ -4,14 +4,18 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Log;
+import android.util.Patterns;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -55,8 +59,36 @@ public class Ingore
     AppSettings settings;
     int count=0;
     Profile myprofile;
+    String whatsappnumber;
+    private SharedPreferences prefs;
+    private SharedPreferences.Editor editor;
+    private int totalCount;
 
     public Ingore(Context context, Activity activity) {
+        this.context = context;
+        this.activity = activity;
+        settings=new AppSettings(context);
+        rack=new ArrayList<>();
+
+        try
+        {
+            ApplicationInfo ai = context.getPackageManager().getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+            Bundle bundle = ai.metaData;
+            //GET AppID
+            APP_ID = bundle.getString("AppID");
+            //GET DeviceID
+            DEVICE_ID = Settings.Secure.getString(context.getContentResolver(), Settings.Secure.ANDROID_ID);
+            rack.add(new DataRack("DeviceId",DEVICE_ID));
+            rack.add(new DataRack("AppId",APP_ID));
+            isFingerprint();
+        }
+        catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Ingore(Context context, Activity activity,String whatsappnumber) {
+        this.whatsappnumber=whatsappnumber;
         this.context = context;
         this.activity = activity;
         settings=new AppSettings(context);
@@ -89,12 +121,14 @@ public class Ingore
         myprofile=profile;
         myprofile.setDeviceId(DEVICE_ID);
         uploadProfile(profile);
+        checkBlocked();
     }
 
     public void initIngore()
     {
         registerCount();
         accureProfile();
+        checkBlocked();
     }
 
     public void registerEvent(String name,String value)
@@ -130,6 +164,7 @@ public class Ingore
     {
         return myprofile;
     }
+
 
 
 
@@ -191,6 +226,18 @@ public class Ingore
     public void invokeWhatsAppPrompt(String number)
     {
         whatsappPrompt(number);
+    }
+
+    public void invokeWhatsAppPrompt()
+    {
+        if (whatsappnumber==null)
+        {
+            Toast.makeText(context, "Unfortunately WhatsApp chat support is unavailable at this moment", Toast.LENGTH_SHORT).show();
+        }
+        else
+        {
+            whatsappPrompt(whatsappnumber);
+        }
     }
 
     public void invokeRateOnPlaystore(String request)
@@ -310,6 +357,29 @@ public class Ingore
         server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
     }
 
+    private void checkBlocked()
+    {
+        WebServer server=new WebServer(context);
+        server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+            @Override
+            public void onServerResponded(String s) {
+                Gson gson=new Gson();
+                Block block=gson.fromJson(s,Block.class);
+                if (block!=null)
+                {
+                    if (block.getStatus().equals("blocked")) {
+                        blockPrompt(block.getReason());
+                    }
+                }
+            }
+
+            @Override
+            public void onServerRevoked() {
+
+            }
+        });
+        server.connectWithGET(context.getString(R.string.baseURL)+"getblocks.php?DeviceId="+DEVICE_ID+"&AppId="+APP_ID);
+    }
 
 
 
@@ -342,7 +412,7 @@ public class Ingore
 
                 //Create an event that shows user is trying to update
                 EasyAppMod easyAppMod = new EasyAppMod(context);
-                registerEvent("UPDATED_INITIATED_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+                registerEvent("UPDATE_INITIATED_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode()+" "+easyAppMod.getAppVersion());
 
                 Intent i = new Intent(Intent.ACTION_VIEW);
                 i.setData(Uri.parse(Url));
@@ -371,7 +441,7 @@ public class Ingore
 
                 //Create an event that shows a bug report is fired
                 EasyAppMod easyAppMod = new EasyAppMod(context);
-                registerEvent("BUG_REPORTED_BY_USER",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+                registerEvent("BUG_REPORTED_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode()+" "+easyAppMod.getAppVersion());
 
                 WebServer server=new WebServer(context);
                 server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
@@ -409,38 +479,45 @@ public class Ingore
         Window window = ask.getWindow();
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
         Button send=(Button)ask.findViewById(R.id.send);
+        final EditText suggestion=(EditText)ask.findViewById(R.id.suggestion);
 
         send.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View view)
             {
+                if(suggestion.getText().length()>=5)
+                {
+                    //Future prompting
+                    EasyAppMod easyAppMod = new EasyAppMod(context);
+                    registerEvent("FEATURE_SUGGESTED",suggestion.getText().toString());
 
-                //Future prompting
-                EasyAppMod easyAppMod = new EasyAppMod(context);
-                registerEvent("FEATURE_SUGGESTED",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+                    WebServer server=new WebServer(context);
+                    server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+                        @Override
+                        public void onServerResponded(String s) {
+                        }
 
-                WebServer server=new WebServer(context);
-                server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
-                    @Override
-                    public void onServerResponded(String s) {
-                    }
+                        @Override
+                        public void onServerRevoked() {
 
-                    @Override
-                    public void onServerRevoked() {
+                        }
+                    });
+                    List<DataRack> racks=new ArrayList<>();
+                    String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
+                    racks.add(new DataRack("DeviceID",DEVICE_ID));
+                    racks.add(new DataRack("AppID",APP_ID));
+                    racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
+                    racks.add(new DataRack("Message",suggestion.getText().toString()));
+                    racks.add(new DataRack("Timestamp",date));
+                    server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regfeature.php",racks);
+                    ask.dismiss();
+                }
+                else
+                {
+                    suggestion.setError("Please suggest properly");
+                }
 
-                    }
-                });
-                List<DataRack> racks=new ArrayList<>();
-                EditText suggestion=(EditText)ask.findViewById(R.id.suggestion);
-                String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
-                racks.add(new DataRack("DeviceID",DEVICE_ID));
-                racks.add(new DataRack("AppID",APP_ID));
-                racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
-                racks.add(new DataRack("Message",suggestion.getText().toString()));
-                racks.add(new DataRack("Timestamp",date));
-                server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regfeature.php",racks);
-                ask.dismiss();
             }
         });
 
@@ -467,8 +544,7 @@ public class Ingore
 
                     //Rating declined
                     EasyAppMod easyAppMod = new EasyAppMod(context);
-                    registerEvent("RATING_DONTSHOW_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
-
+                    registerEvent("RATING_DONTSHOW_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode()+" "+easyAppMod.getAppVersion());
                     settings.saveSettings("dontShowRateAndReview","true");
                     ask.dismiss();
                 }
@@ -481,7 +557,7 @@ public class Ingore
 
                     //Rating initiated
                     EasyAppMod easyAppMod = new EasyAppMod(context);
-                    registerEvent("RATING_INITIATED_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode());
+                    registerEvent("RATING_ATTEMPT_FROM",easyAppMod.getAppName()+" "+easyAppMod.getAppVersionCode()+" "+easyAppMod.getAppVersion());
 
                     Intent i = new Intent(Intent.ACTION_VIEW);
                     i.setData(Uri.parse(getPlayLink()));
@@ -507,6 +583,7 @@ public class Ingore
             @Override
             public void onClick(View view)
             {
+                registerEvent("WHATSAPP_CHAT","Tried");
                 if (myprofile!=null)
                 {
                     PackageManager packageManager = context.getPackageManager();
@@ -551,29 +628,123 @@ public class Ingore
         final EditText lname=(EditText)ask.findViewById(R.id.lastname);
         final EditText email=(EditText)ask.findViewById(R.id.email);
 
+
         start.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View view)
             {
-                WebServer server=new WebServer(context);
-                server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
-                    @Override
-                    public void onServerResponded(String s) {
-                    }
+                if (fname.getText().length()>1)
+                {
+                    if(lname.getText().length()>0)
+                    {
+                        if (email.length()>0)
+                        {
+                            if (isValidEmail(email.getText()))
+                            {
+                                registerEvent("EMAIL_PROVIDED",email.getText().toString());
+                                WebServer server=new WebServer(context);
+                                server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+                                    @Override
+                                    public void onServerResponded(String s) {
+                                    }
 
-                    @Override
-                    public void onServerRevoked() {
+                                    @Override
+                                    public void onServerRevoked() {
 
+                                    }
+                                });
+                                List<DataRack> racks=new ArrayList<>();
+                                racks.add(new DataRack("DeviceID",DEVICE_ID));
+                                racks.add(new DataRack("Fname",fname.getText().toString()));
+                                racks.add(new DataRack("Lname",lname.getText().toString()));
+                                racks.add(new DataRack("Email",email.getText().toString()));
+                                server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
+                                ask.dismiss();
+                            }
+                            else
+                            {
+                                email.setError("Invalid email format");
+                            }
+                        }
+                        else
+                        {
+                            WebServer server=new WebServer(context);
+                            server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+                                @Override
+                                public void onServerResponded(String s) {
+                                }
+
+                                @Override
+                                public void onServerRevoked() {
+
+                                }
+                            });
+                            List<DataRack> racks=new ArrayList<>();
+                            racks.add(new DataRack("DeviceID",DEVICE_ID));
+                            racks.add(new DataRack("Fname",fname.getText().toString()));
+                            racks.add(new DataRack("Lname",lname.getText().toString()));
+                            racks.add(new DataRack("Email",email.getText().toString()));
+                            server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
+                            ask.dismiss();
+                        }
                     }
-                });
-                List<DataRack> racks=new ArrayList<>();
-                racks.add(new DataRack("DeviceID",DEVICE_ID));
-                racks.add(new DataRack("Fname",fname.getText().toString()));
-                racks.add(new DataRack("Lname",lname.getText().toString()));
-                racks.add(new DataRack("Email",email.getText().toString()));
-                server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
-                ask.dismiss();
+                    else
+                    {
+                        lname.setError("Proper lastname required");
+                    }
+                }
+                else
+                {
+                    fname.setError("Proper firstname required");
+                }
+            }
+        });
+
+
+        ask.show();
+    }
+
+    private boolean isValidEmail(CharSequence target)
+    {
+        return (!TextUtils.isEmpty(target) && Patterns.EMAIL_ADDRESS.matcher(target).matches());
+    }
+
+    private void blockPrompt(String reasontext)
+    {
+        registerEvent("APP_BLOCKED",reasontext);
+        final Dialog ask=new Dialog(activity);
+        ask.setCancelable(false);
+        ask.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        ask.setContentView(R.layout.block_prompt);
+        Window window = ask.getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+        Button contact=(Button)ask.findViewById(R.id.contact);
+        Button close=(Button)ask.findViewById(R.id.close);
+        TextView reason=(TextView)ask.findViewById(R.id.reason);
+
+        reason.setText(reasontext);
+        close.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                activity.finish();
+                System.exit(0);
+            }
+        });
+
+        contact.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                if (whatsappnumber==null)
+                {
+                    Toast.makeText(context, "Sorry, The developer of this application does not provide a medium to communicate over WhatsApp", Toast.LENGTH_SHORT).show();
+                }
+                else
+                {
+                    whatsappPrompt(whatsappnumber);
+                }
             }
         });
 
@@ -710,17 +881,13 @@ public class Ingore
 
     private void registerCount()
     {
-        if (settings.retriveSettings("isFirst").equals(""))
-        {
-            count++;
-            settings.saveSettings("isFirst",String.valueOf(count));
-        }
-        else
-        {
-            count=Integer.parseInt(settings.retriveSettings("isFirst"));
-            count++;
-            settings.saveSettings("isFirst",String.valueOf(count));
-        }
+        prefs = activity.getPreferences(Context.MODE_PRIVATE);
+        editor = prefs.edit();
+        totalCount = prefs.getInt("counter", 0);
+        totalCount++;
+        editor.putInt("counter", totalCount);
+        editor.commit();
+        count=totalCount;
         rack.add(new DataRack("AppUsage",String.valueOf(count)));
         isFingerprint();
     }
