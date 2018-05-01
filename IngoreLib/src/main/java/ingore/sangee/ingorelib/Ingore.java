@@ -102,7 +102,7 @@ public class Ingore
 
             }
         });
-        server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regevents.php",eventrack);
+        server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regevents.php",eventrack);
     }
 
     public void invokeUpdatePrompt()
@@ -144,7 +144,7 @@ public class Ingore
 
             }
         });
-        server.connectWithGET("http://ingore.sangeethnandakumar.com/getupdates.php?AppID="+APP_ID);
+        server.connectWithGET(context.getString(R.string.baseURL)+"getupdates.php?AppID="+APP_ID);
     }
 
     public void invokeFuturePrompt()
@@ -299,7 +299,7 @@ public class Ingore
                 racks.add(new DataRack("Timestamp",date));
                 racks.add(new DataRack("Stacktrace",stacktrace));
                 racks.add(new DataRack("Steps",steps.getText().toString()));
-                server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regbug.php",racks);
+                server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regbug.php",racks);
                 ask.dismiss();
             }
         });
@@ -345,7 +345,7 @@ public class Ingore
                 racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
                 racks.add(new DataRack("Message",suggestion.getText().toString()));
                 racks.add(new DataRack("Timestamp",date));
-                server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regfeature.php",racks);
+                server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regfeature.php",racks);
                 ask.dismiss();
             }
         });
@@ -568,6 +568,6 @@ public class Ingore
             public void onServerRevoked() {
             }
         });
-        server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/regdevices.php",rack);
+        server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regdevices.php",rack);
     }
 }
