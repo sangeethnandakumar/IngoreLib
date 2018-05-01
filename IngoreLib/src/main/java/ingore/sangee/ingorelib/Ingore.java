@@ -18,8 +18,12 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -50,6 +54,7 @@ public class Ingore
     List<DataRack> rack;
     AppSettings settings;
     int count=0;
+    Profile myprofile;
 
     public Ingore(Context context, Activity activity) {
         this.context = context;
@@ -68,7 +73,8 @@ public class Ingore
             rack.add(new DataRack("DeviceId",DEVICE_ID));
             rack.add(new DataRack("AppId",APP_ID));
             isFingerprint();
-        } catch (PackageManager.NameNotFoundException e) {
+        }
+        catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -77,8 +83,18 @@ public class Ingore
 
 
     // INGORE CORE CALLS
-    public void initIngore(){
+    public void initIngore(Profile profile)
+    {
         registerCount();
+        myprofile=profile;
+        myprofile.setDeviceId(DEVICE_ID);
+        uploadProfile(profile);
+    }
+
+    public void initIngore()
+    {
+        registerCount();
+        accureProfile();
     }
 
     public void registerEvent(String name,String value)
@@ -105,6 +121,20 @@ public class Ingore
         server.connectWithPOST(activity,context.getString(R.string.baseURL)+"regevents.php",eventrack);
     }
 
+    public int getAppSessionCount()
+    {
+        return count;
+    }
+
+    public Profile getUserProfile()
+    {
+        return myprofile;
+    }
+
+
+
+
+    //UI Invokes
     public void invokeUpdatePrompt()
     {
         WebServer server=new WebServer(context);
@@ -158,17 +188,38 @@ public class Ingore
         bugPrompt(stackTrace);
     }
 
+    public void invokeWhatsAppPrompt(String number)
+    {
+        whatsappPrompt(number);
+    }
+
     public void invokeRateOnPlaystore(String request)
     {
         rateAndReview(request);
     }
 
-    public int getAppSessionCount()
+    public void invokeRateOnPlaystoreOnPrimeIntervals(String request)
     {
-        return count;
+        if (count>4)
+        {
+            if (isPrime(count))
+            {
+                invokeRateOnPlaystore(request);
+            }
+        }
     }
 
-    public void resetAppSessionCount()
+    public void invokeProfilePrompt()
+    {
+        profilePrompt();
+    }
+
+
+
+
+
+    //Configuration tweeks
+    public void tweekConfig_resetAppSessionCount()
     {
         count=0;
     }
@@ -185,20 +236,11 @@ public class Ingore
         }
     }
 
-    public void invokeRateOnPlaystoreOnPrimeIntervals(String request)
-    {
-        if (count>4)
-        {
-            if (isPrime(count))
-            {
-                invokeRateOnPlaystore(request);
-            }
-        }
-    }
 
 
 
 
+    //Private functions
     private boolean isPrime(int num)
     {
         int temp;
@@ -217,6 +259,58 @@ public class Ingore
         else
             return false;
     }
+
+    private void accureProfile()
+    {
+        WebServer server=new WebServer(context);
+        server.setOnServerStatusListner(new WebServer.OnServerStatusListner()
+        {
+            @Override
+            public void onServerResponded(String s)
+            {
+                try
+                {
+                    Gson gson=new Gson();
+                    myprofile=gson.fromJson(s,Profile.class);
+                    //Invoke profile if not registered
+                    if (myprofile==null)
+                    {
+                        profilePrompt();
+                    }
+                }
+                catch (Exception e)
+                {
+                }
+            }
+
+            @Override
+            public void onServerRevoked() {}
+        });
+        server.connectWithGET(context.getString(R.string.baseURL)+"getprofile.php?DeviceId="+DEVICE_ID);
+    }
+
+    private void uploadProfile(Profile profile)
+    {
+        WebServer server=new WebServer(context);
+        server.setOnServerStatusListner(new WebServer.OnServerStatusListner()
+        {
+            @Override
+            public void onServerResponded(String s)
+            {
+            }
+
+            @Override
+            public void onServerRevoked() {}
+        });
+        List<DataRack> racks=new ArrayList<>();
+        racks.add(new DataRack("DeviceID",DEVICE_ID));
+        racks.add(new DataRack("Fname",profile.getFirstname()));
+        racks.add(new DataRack("Lname",profile.getLastname()));
+        racks.add(new DataRack("Email",profile.getEMail()));
+        server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
+    }
+
+
 
 
 
@@ -398,6 +492,99 @@ public class Ingore
         }
     }
 
+    private void whatsappPrompt(final String number)
+    {
+        final Dialog ask=new Dialog(activity);
+        ask.setCancelable(true);
+        ask.setContentView(R.layout.whatsapp_prompt);
+        Window window = ask.getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+
+        Button chat=(Button)ask.findViewById(R.id.chat);
+
+        chat.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                if (myprofile!=null)
+                {
+                    PackageManager packageManager = context.getPackageManager();
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    try
+                    {
+                        EasyAppMod app = new EasyAppMod(context);
+                        String message= URLEncoder.encode("My name is *"+myprofile.getFirstname()+" "+myprofile.getLastname()+"*\nI'm using *"+app.getAppName()+" "+app.getAppVersionCode()+" "+app.getAppVersion()+"*\nI would like to initialise a conversation with support desk", "UTF-8");
+                        String url = "https://api.whatsapp.com/send?phone="+ number +"&text="+message;
+                        i.setPackage("com.whatsapp");
+                        i.setData(Uri.parse(url));
+                        if (i.resolveActivity(packageManager) != null)
+                        {
+                            context.startActivity(i);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                {
+                 accureProfile();
+                }
+            }
+        });
+
+        ask.show();
+    }
+
+    private void profilePrompt()
+    {
+        final Dialog ask=new Dialog(activity);
+        ask.setCancelable(false);
+        ask.setContentView(R.layout.profile_prompt);
+        Window window = ask.getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
+        Button start=(Button)ask.findViewById(R.id.send);
+
+        final EditText fname=(EditText)ask.findViewById(R.id.fname);
+        final EditText lname=(EditText)ask.findViewById(R.id.lastname);
+        final EditText email=(EditText)ask.findViewById(R.id.email);
+
+        start.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                WebServer server=new WebServer(context);
+                server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+                    @Override
+                    public void onServerResponded(String s) {
+                    }
+
+                    @Override
+                    public void onServerRevoked() {
+
+                    }
+                });
+                List<DataRack> racks=new ArrayList<>();
+                racks.add(new DataRack("DeviceID",DEVICE_ID));
+                racks.add(new DataRack("Fname",fname.getText().toString()));
+                racks.add(new DataRack("Lname",lname.getText().toString()));
+                racks.add(new DataRack("Email",email.getText().toString()));
+                server.connectWithPOST(activity,context.getString(R.string.baseURL)+"setprofile.php",racks);
+                ask.dismiss();
+            }
+        });
+
+
+        ask.show();
+    }
+
+
+
+
+
     //INGORE ANELETIC SERVICE MODULES
     private String getPlayLink()
     {
@@ -405,7 +592,6 @@ public class Ingore
         String playlink="https://play.google.com/store/apps/details?id="+easyAppMod.getPackageName();
         return playlink;
     }
-
 
     private void isFingerprint()
     {

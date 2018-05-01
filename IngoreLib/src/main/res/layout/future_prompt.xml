@@ -38,6 +38,7 @@
                 android:textSize="18dp"/>
         </LinearLayout>
         <TextView
+            android:gravity="center"
             android:id="@+id/updatetext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -69,7 +70,7 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="20dp"
-            android:background="#fd8b00"
+            android:background="#c10075"
             android:text="SEND TO DEVELOPER TEAM"
             android:textColor="#fff" />
     </LinearLayout>

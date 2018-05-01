@@ -23,7 +23,7 @@
                 android:layout_width="35dp"
                 android:layout_height="35dp"
                 android:layout_weight="0.15"
-                android:src="@drawable/bug" />
+                android:src="@drawable/profile" />
             <TextView
                 android:layout_gravity="center"
                 android:layout_weight="1.85"
@@ -34,7 +34,7 @@
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
-                android:text="Oh.. That's a Bug"
+                android:text="How can we identify you ?"
                 android:textSize="18dp"/>
         </LinearLayout>
         <TextView
@@ -45,11 +45,11 @@
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:text="The action you performed was not succesful because of a bug. A bug is a software error. If you are willing to provide us the steps you performed that ends in generating this bug, Then we can better fix it on next update" />
+            android:text="If you provide your basic info, Then we can identify you from our increasing userbase and be able to provide high quality services" />
 
         <EditText
             android:padding="10dp"
-            android:id="@+id/steps"
+            android:id="@+id/fname"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
@@ -57,8 +57,38 @@
             android:layout_marginTop="8dp"
             android:background="@null"
             android:fontFamily="@font/arvo"
-            android:hint="Steps you performed that generates this bug"
-            android:inputType="textMultiLine"
+            android:hint="Firstname"
+            android:inputType="textPersonName"
+            android:singleLine="false"
+            android:textColor="#000"
+            android:textSize="16sp" />
+        <EditText
+            android:padding="10dp"
+            android:id="@+id/lastname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@null"
+            android:fontFamily="@font/arvo"
+            android:hint="Lastname"
+            android:inputType="textPersonName"
+            android:singleLine="false"
+            android:textColor="#000"
+            android:textSize="16sp" />
+        <EditText
+            android:padding="10dp"
+            android:id="@+id/email"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@null"
+            android:fontFamily="@font/arvo"
+            android:hint="Email Address (Optional)"
+            android:inputType="textEmailAddress"
             android:singleLine="false"
             android:textColor="#000"
             android:textSize="16sp" />
@@ -70,8 +100,8 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="20dp"
-            android:background="#e60000"
-            android:text="REPORT STEPS"
+            android:background="#22536b"
+            android:text="START USING THE APP"
             android:textColor="#fff" />
     </LinearLayout>
 

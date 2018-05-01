@@ -24,6 +24,7 @@
                 android:src="@drawable/rating" />
         </LinearLayout>
         <TextView
+            android:textColor="#282828"
             android:gravity="center"
             android:id="@+id/updatetext"
             android:layout_width="match_parent"
@@ -56,15 +57,16 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="10dp"
-            android:background="#c7c402"
+            android:background="#ff9900"
             android:text="RATE ON PLAYSTORE"
             android:textColor="#fff" />
         <TextView
+            android:textSize="10dp"
             android:layout_marginBottom="20dp"
             android:id="@+id/dontshow"
             android:layout_marginLeft="16dp"
             android:text="Don't show again"
-            android:textColor="#0f5cea"
+            android:textColor="#bebebe"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
     </LinearLayout>

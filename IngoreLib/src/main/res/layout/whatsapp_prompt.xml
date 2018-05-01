@@ -23,20 +23,22 @@
                 android:layout_width="35dp"
                 android:layout_height="35dp"
                 android:layout_weight="0.15"
-                android:src="@drawable/bug" />
+                android:src="@drawable/whatsapp" />
+
             <TextView
-                android:layout_gravity="center"
-                android:layout_weight="1.85"
                 android:id="@+id/textView"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_gravity="center"
                 android:layout_marginBottom="8dp"
                 android:layout_marginEnd="8dp"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
-                android:text="Oh.. That's a Bug"
-                android:textSize="18dp"/>
+                android:layout_weight="1.85"
+                android:text="Further Assistance"
+                android:textSize="18dp" />
         </LinearLayout>
+
         <TextView
             android:gravity="center"
             android:id="@+id/updatetext"
@@ -45,33 +47,19 @@
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:text="The action you performed was not succesful because of a bug. A bug is a software error. If you are willing to provide us the steps you performed that ends in generating this bug, Then we can better fix it on next update" />
+            android:text="If you need further assistance from the app development team, Then you can initialise a WhatsApp chat to clarify your doubts and queries"
+            android:textAlignment="center" />
 
-        <EditText
-            android:padding="10dp"
-            android:id="@+id/steps"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@null"
-            android:fontFamily="@font/arvo"
-            android:hint="Steps you performed that generates this bug"
-            android:inputType="textMultiLine"
-            android:singleLine="false"
-            android:textColor="#000"
-            android:textSize="16sp" />
         <Button
-            android:id="@+id/send"
+            android:id="@+id/chat"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:layout_marginBottom="20dp"
-            android:background="#e60000"
-            android:text="REPORT STEPS"
+            android:background="#09a101"
+            android:text="CHAT ON WHATSAPP"
             android:textColor="#fff" />
     </LinearLayout>
 

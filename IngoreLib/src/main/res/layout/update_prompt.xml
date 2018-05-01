@@ -38,6 +38,7 @@
                 android:textSize="18dp"/>
         </LinearLayout>
         <TextView
+            android:gravity="center"
             android:id="@+id/updatetext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
