@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -21,11 +22,15 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
+import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.squareup.picasso.Picasso;
 
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -279,6 +284,24 @@ public class Ingore
     public void invokeProfilePrompt()
     {
         profilePrompt();
+    }
+
+    public void invokeAdsPrompt()
+    {
+        WebServer server=new WebServer(context);
+        server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+            @Override
+            public void onServerResponded(String s) {
+                Adv ads =new Gson().fromJson(s,Adv.class);
+                adPrompt(ads.adText, ads.adTheme,ads.adURL,ads.adRedirect);
+            }
+
+            @Override
+            public void onServerRevoked() {
+
+            }
+        });
+        server.connectWithGET("http://ingore.sangeethnandakumar.com/getads.php");
     }
 
 
@@ -769,6 +792,36 @@ public class Ingore
         });
 
 
+        ask.show();
+    }
+
+    private void adPrompt(String buttontext, String themecolor, final String adurl, final String adredirecturl)
+    {
+        registerEvent("AD_DISPLAYED",buttontext);
+        final Dialog ask=new Dialog(activity);
+        ask.setCancelable(true);
+        ask.getWindow().setBackgroundDrawable(new ColorDrawable(android.graphics.Color.TRANSPARENT));
+        ask.setContentView(R.layout.ads_prompt);
+        Window window = ask.getWindow();
+        window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT);
+        Button adcenter=(Button)ask.findViewById(R.id.adcenter);
+        adcenter.setText(buttontext);
+        ImageView adview=(ImageView)ask.findViewById(R.id.adview);
+        Glide.with(context)
+                .load(adurl)
+                .asGif()
+                .into(adview);
+
+        int parseColor = Color.parseColor(themecolor);
+        adcenter.setBackgroundColor(parseColor);
+
+        adcenter.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                registerEvent("LAST_AD_EXPLORED",adurl);
+                activity.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(adredirecturl)));
+            }
+        });
         ask.show();
     }
 
