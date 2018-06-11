@@ -36,7 +36,10 @@ import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+
 import bullyfox.sangeeth.testube.component.DataRack;
 import bullyfox.sangeeth.testube.managers.AppSettings;
 import bullyfox.sangeeth.testube.network.WebServer;
@@ -190,6 +193,53 @@ public class Ingore
         return myprofile;
     }
 
+    public void getMessages(OnMessagesListner reciver)
+    {
+        final OnMessagesListner myreciver=reciver;
+        WebServer server=new WebServer(activity);
+        server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+            @Override
+            public void onServerResponded(String s) {
+                Gson gson=new Gson();
+                List<Message> messages = gson.fromJson(s, new TypeToken<List<Message>>(){}.getType());
+
+                List<Message> todays=new ArrayList<>();
+                List<Message> future=new ArrayList<>();
+                String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+                for (int i=0;i<messages.size();i++)
+                {
+                    if (messages.get(i).expiary.equals(date))
+                    {
+
+                        todays.add(messages.get(i));
+                    }
+                    else
+                    {
+                        future.add(messages.get(i));
+                    }
+                }
+
+                myreciver.todaysMessages(todays);
+                myreciver.futureMessages(future);
+            }
+
+            @Override
+            public void onServerRevoked() {
+
+            }
+        });
+        List<DataRack> racks=new ArrayList<>();
+        racks.add(new DataRack("AppID",APP_ID));
+        server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/getmessages.php",racks);
+    }
+
+    public interface OnMessagesListner
+    {
+        void todaysMessages(List<Message> messages);
+        void futureMessages(List<Message> messages);
+    }
+
 
 
 
@@ -242,10 +292,10 @@ public class Ingore
         futurePrompt();
     }
 
-    public void invokeBugPrompt(Exception exception)
+    public void invokeBugPrompt(String title, String onClass, String onFunction, Exception exception)
     {
         String stackTrace = Log.getStackTraceString(exception);
-        bugPrompt(stackTrace);
+        bugPrompt(title,onClass, onFunction,stackTrace);
     }
 
     public void invokeWhatsAppPrompt(String number)
@@ -466,7 +516,7 @@ public class Ingore
         update.show();
     }
 
-    private void bugPrompt(final String stacktrace)
+    private void bugPrompt(final String title, final String onClass, final String onFunction, final String stacktrace)
     {
         final Dialog ask=new Dialog(activity);
         ask.setCancelable(true);
@@ -490,6 +540,7 @@ public class Ingore
                 server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
                     @Override
                     public void onServerResponded(String s) {
+                        Toast.makeText(context, "Thank you for reporting the bug. We will fix it as soon as possible", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -504,6 +555,9 @@ public class Ingore
                 racks.add(new DataRack("AppID",APP_ID));
                 racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
                 racks.add(new DataRack("Timestamp",date));
+                racks.add(new DataRack("Title",title));
+                racks.add(new DataRack("Class",onClass));
+                racks.add(new DataRack("Function",onFunction));
                 racks.add(new DataRack("Stacktrace",stacktrace));
                 racks.add(new DataRack("Steps",steps.getText().toString()));
                 server.connectWithPOST(activity,BASE_URL+"regbug.php",racks);
