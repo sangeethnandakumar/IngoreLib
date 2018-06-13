@@ -23,14 +23,13 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
 
 import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.squareup.picasso.Picasso;
 
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
@@ -39,9 +38,11 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 import bullyfox.sangeeth.testube.component.DataRack;
 import bullyfox.sangeeth.testube.managers.AppSettings;
+import bullyfox.sangeeth.testube.managers.SuperDatabase;
 import bullyfox.sangeeth.testube.network.WebServer;
 import github.nisrulz.easydeviceinfo.base.EasyAppMod;
 import github.nisrulz.easydeviceinfo.base.EasyBatteryMod;
@@ -71,16 +72,19 @@ public class Ingore
     private SharedPreferences prefs;
     private SharedPreferences.Editor editor;
     private int totalCount;
+    private WebServer generalserver;
+    private String SESSION;
 
     public Ingore(ReportMode mode,Context context, Activity activity) {
+        generalserver=new WebServer(context);
 
         if (mode==ReportMode.DEBUG_MODE)
         {
-            BASE_URL="http://192.168.43.207/ingore/";
+            BASE_URL="http://192.168.43.207/ingore.sangeethnandakumar.com/ingore.v2/";
         }
         else if (mode==ReportMode.RELEASE_MODE)
         {
-            BASE_URL="http://ingore.sangeethnandakumar.com/";
+            BASE_URL="http://ingore.sangeethnandakumar.com/ingore.v2/";
         }
 
         this.context = context;
@@ -106,14 +110,15 @@ public class Ingore
     }
 
     public Ingore(ReportMode mode,Context context, Activity activity,String whatsappnumber) {
+        generalserver=new WebServer(context);
 
         if (mode==ReportMode.DEBUG_MODE)
         {
-            BASE_URL="http://192.168.43.207/ingore/";
+            BASE_URL="http://192.168.43.207/ingore.sangeethnandakumar.com/ingore.v2/";
         }
         else if (mode==ReportMode.RELEASE_MODE)
         {
-            BASE_URL="http://ingore.sangeethnandakumar.com/";
+            BASE_URL="http://ingore.sangeethnandakumar.com/ingore.v2/";
         }
 
         this.whatsappnumber=whatsappnumber;
@@ -161,7 +166,7 @@ public class Ingore
 
     public void registerEvent(String name,String value)
     {
-        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
+        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS a").format(Calendar.getInstance().getTime());
         List<DataRack> eventrack=new ArrayList<>();
         eventrack.add(new DataRack("DeviceID",DEVICE_ID));
         eventrack.add(new DataRack("AppID",APP_ID));
@@ -180,7 +185,7 @@ public class Ingore
 
             }
         });
-        server.connectWithPOST(activity,BASE_URL+"regevents.php",eventrack);
+        server.connectWithPOST(activity,BASE_URL+"Events/registerEvent.php",eventrack);
     }
 
     public int getAppSessionCount()
@@ -196,28 +201,37 @@ public class Ingore
     public void getMessages(OnMessagesListner reciver)
     {
         final OnMessagesListner myreciver=reciver;
+
+        final List<Message> todays=new ArrayList<>();
+        final List<Message> future=new ArrayList<>();
+
         WebServer server=new WebServer(activity);
         server.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
             @Override
-            public void onServerResponded(String s) {
+            public void onServerResponded(String s)
+            {
                 Gson gson=new Gson();
                 List<Message> messages = gson.fromJson(s, new TypeToken<List<Message>>(){}.getType());
-
-                List<Message> todays=new ArrayList<>();
-                List<Message> future=new ArrayList<>();
                 String date = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
 
-                for (int i=0;i<messages.size();i++)
+                //Check if succesfully parsed
+                if (messages!=null)
                 {
-                    if (messages.get(i).expiary.equals(date))
+                    for (int i=0;i<messages.size();i++)
                     {
-
-                        todays.add(messages.get(i));
+                        if (messages.get(i).expiary.equals(date))
+                        {
+                            todays.add(messages.get(i));
+                        }
+                        else
+                        {
+                            future.add(messages.get(i));
+                        }
                     }
-                    else
-                    {
-                        future.add(messages.get(i));
-                    }
+                }
+                else
+                {
+                    messages=new ArrayList<>();
                 }
 
                 myreciver.todaysMessages(todays);
@@ -225,13 +239,15 @@ public class Ingore
             }
 
             @Override
-            public void onServerRevoked() {
-
+            public void onServerRevoked()
+            {
+                myreciver.todaysMessages(todays);
+                myreciver.futureMessages(future);
             }
         });
         List<DataRack> racks=new ArrayList<>();
         racks.add(new DataRack("AppID",APP_ID));
-        server.connectWithPOST(activity,"http://ingore.sangeethnandakumar.com/getmessages.php",racks);
+        server.connectWithPOST(activity,BASE_URL + "Messages/getMessages.php",racks);
     }
 
     public interface OnMessagesListner
@@ -240,6 +256,34 @@ public class Ingore
         void futureMessages(List<Message> messages);
     }
 
+    public void logStep(String session, String step)
+    {
+        SESSION=session;
+        EasyAppMod app = new EasyAppMod(context);
+        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS a").format(Calendar.getInstance().getTime());
+        ingoreDB().sqlInject("REPLACE INTO `usecase` VALUES('"+session+"','"+DEVICE_ID+"','"+APP_ID+"','"+app.getAppVersion()+"','"+date+"','"+step+"')");
+    }
+
+    public void stopIngore()
+    {
+        EasyAppMod app = new EasyAppMod(context);
+        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS a").format(Calendar.getInstance().getTime());
+        ingoreDB().sqlInject("REPLACE INTO `usecase` VALUES('"+SESSION+"','"+DEVICE_ID+"','"+APP_ID+"','"+app.getAppVersion()+"','"+date+"','App Stopped')");
+        generalserver.setOnServerStatusListner(new WebServer.OnServerStatusListner() {
+            @Override
+            public void onServerResponded(String s) {
+                ingoreDB().sqlInject("DELETE FROM `usecase`");
+            }
+
+            @Override
+            public void onServerRevoked() {
+
+            }
+        });
+        List<DataRack> racks=new ArrayList<>();
+        racks.add(new DataRack("Log",ingoreDB().sqlEjectJSON("SELECT * FROM `usecase`")));
+        generalserver.connectWithPOST(activity,BASE_URL + "Usecases/registerUsecase.php",racks);
+    }
 
 
 
@@ -284,7 +328,9 @@ public class Ingore
 
             }
         });
-        server.connectWithGET(BASE_URL+"getupdates.php?AppID="+APP_ID);
+        List<DataRack> racks=new ArrayList<>();
+        racks.add(new DataRack("AppId",APP_ID));
+        server.connectWithPOST(activity, BASE_URL+"Updates/getUpdates.php",racks);
     }
 
     public void invokeFuturePrompt()
@@ -298,16 +344,11 @@ public class Ingore
         bugPrompt(title,onClass, onFunction,stackTrace);
     }
 
-    public void invokeWhatsAppPrompt(String number)
-    {
-        whatsappPrompt(number);
-    }
-
     public void invokeWhatsAppPrompt()
     {
         if (whatsappnumber==null)
         {
-            Toast.makeText(context, "Unfortunately WhatsApp chat support is unavailable at this moment", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, "This application does not support WhatsApp chat feature", Toast.LENGTH_SHORT).show();
         }
         else
         {
@@ -351,7 +392,17 @@ public class Ingore
 
             }
         });
-        server.connectWithGET("http://ingore.sangeethnandakumar.com/getads.php");
+        server.connectWithGET(BASE_URL + "Ads/getAds.php");
+    }
+
+    public String generateSession()
+    {
+        final String ALLOWED_CHARACTERS ="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        final Random random=new Random();
+        final StringBuilder sb=new StringBuilder(4);
+        for(int i=0;i<4;++i)
+            sb.append(ALLOWED_CHARACTERS.charAt(random.nextInt(ALLOWED_CHARACTERS.length())));
+        return sb.toString();
     }
 
 
@@ -426,7 +477,9 @@ public class Ingore
             @Override
             public void onServerRevoked() {}
         });
-        server.connectWithGET(BASE_URL+"getprofile.php?DeviceId="+DEVICE_ID);
+        List<DataRack> racks=new ArrayList<>();
+        racks.add(new DataRack("DeviceId",DEVICE_ID));
+        server.connectWithPOST(activity,BASE_URL+"Username/getProfile.php",racks);
     }
 
     private void uploadProfile(Profile profile)
@@ -447,7 +500,7 @@ public class Ingore
         racks.add(new DataRack("Fname",profile.getFirstname()));
         racks.add(new DataRack("Lname",profile.getLastname()));
         racks.add(new DataRack("Email",profile.getEMail()));
-        server.connectWithPOST(activity,BASE_URL+"setprofile.php",racks);
+        server.connectWithPOST(activity,BASE_URL+"Username/setProfile.php",racks);
     }
 
     private void checkBlocked()
@@ -460,7 +513,7 @@ public class Ingore
                 Block block=gson.fromJson(s,Block.class);
                 if (block!=null)
                 {
-                    if (block.getStatus().equals("blocked")) {
+                    if (block.getStatus().equals("BLOCKED")) {
                         blockPrompt(block.getReason());
                     }
                 }
@@ -471,7 +524,30 @@ public class Ingore
 
             }
         });
-        server.connectWithGET(BASE_URL+"getblocks.php?DeviceId="+DEVICE_ID+"&AppId="+APP_ID);
+        List<DataRack> racks=new ArrayList<>();
+        racks.add(new DataRack("DeviceId",DEVICE_ID));
+        racks.add(new DataRack("AppId",APP_ID));
+        server.connectWithPOST(activity,BASE_URL+"Blocks/getBlocks.php",racks);
+    }
+
+    private SuperDatabase ingoreDB()
+    {
+        String DB_SCHEME="CREATE TABLE IF NOT EXISTS `usecase`(" +
+                "`SessionID` VARCHAR(5)," +
+                "`DeviceID` VARCHAR(50)," +
+                "`AppID` VARCHAR(50)," +
+                "`AppVersion` VARCHAR(25)," +
+                "`Timestamp` VARCHAR(50)," +
+                "`Step` VARCHAR(250)" +
+                ");" +
+                "ALTER TABLE `usecase` ADD PRIMARY KEY( `SessionID`, `DeviceID`, `AppID`, `AppVersion`, `Timestamp`, `Step`); ";
+        SuperDatabase database=new SuperDatabase(context,"ingore_db",DB_SCHEME);
+        return database;
+    }
+
+    private void truncateUsecaseTable()
+    {
+        ingoreDB().sqlInject("DELETE FROM `usecase`");
     }
 
 
@@ -498,7 +574,9 @@ public class Ingore
         TextView changelog=(TextView)update.findViewById(R.id.changelog);
         Button updatenow=(Button)update.findViewById(R.id.updatenow);
 
-        changelog.setText(changeLog);
+        changelog.setText(changeLog.replace("> ","\n\u2022 "));
+
+
          updatenow.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -525,6 +603,29 @@ public class Ingore
         window.setLayout(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT);
 
         Button send=(Button)ask.findViewById(R.id.send);
+        ImageView bug=(ImageView)ask.findViewById(R.id.bug);
+        TextView errortitle=(TextView)ask.findViewById(R.id.errortitle);
+        TextView errorpoint=(TextView)ask.findViewById(R.id.errorpoint);
+        EditText stktrace=(EditText)ask.findViewById(R.id.stacktrace);
+
+        errortitle.setText(title);
+        errorpoint.setText(onFunction+"\n"+onClass);
+        stktrace.setText(stacktrace);
+
+        bug.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                LinearLayout log=(LinearLayout)ask.findViewById(R.id.log);
+                if (log.getVisibility()==View.GONE)
+                {
+                    log.setVisibility(View.VISIBLE);
+                }
+                else
+                {
+                    log.setVisibility(View.GONE);
+                }
+            }
+        });
 
         send.setOnClickListener(new View.OnClickListener()
         {
@@ -550,7 +651,7 @@ public class Ingore
                 });
                 List<DataRack> racks=new ArrayList<>();
                 EditText steps=(EditText)ask.findViewById(R.id.steps);
-                String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
+                String date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS a").format(Calendar.getInstance().getTime());
                 racks.add(new DataRack("DeviceID",DEVICE_ID));
                 racks.add(new DataRack("AppID",APP_ID));
                 racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
@@ -560,7 +661,7 @@ public class Ingore
                 racks.add(new DataRack("Function",onFunction));
                 racks.add(new DataRack("Stacktrace",stacktrace));
                 racks.add(new DataRack("Steps",steps.getText().toString()));
-                server.connectWithPOST(activity,BASE_URL+"regbug.php",racks);
+                server.connectWithPOST(activity,BASE_URL+"Bugs/registerBug.php",racks);
                 ask.dismiss();
             }
         });
@@ -601,13 +702,13 @@ public class Ingore
                         }
                     });
                     List<DataRack> racks=new ArrayList<>();
-                    String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
+                    String date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS a").format(Calendar.getInstance().getTime());
                     racks.add(new DataRack("DeviceID",DEVICE_ID));
                     racks.add(new DataRack("AppID",APP_ID));
                     racks.add(new DataRack("AppVersion",easyAppMod.getAppVersionCode()));
                     racks.add(new DataRack("Message",suggestion.getText().toString()));
                     racks.add(new DataRack("Timestamp",date));
-                    server.connectWithPOST(activity,BASE_URL+"regfeature.php",racks);
+                    server.connectWithPOST(activity,BASE_URL+"Feature/registerFeature.php",racks);
                     ask.dismiss();
                 }
                 else
@@ -756,7 +857,7 @@ public class Ingore
                                 racks.add(new DataRack("Fname",fname.getText().toString()));
                                 racks.add(new DataRack("Lname",lname.getText().toString()));
                                 racks.add(new DataRack("Email",email.getText().toString()));
-                                server.connectWithPOST(activity,BASE_URL+"setprofile.php",racks);
+                                server.connectWithPOST(activity,BASE_URL+"Username/setProfile.php",racks);
                                 ask.dismiss();
                             }
                             else
@@ -782,7 +883,7 @@ public class Ingore
                             racks.add(new DataRack("Fname",fname.getText().toString()));
                             racks.add(new DataRack("Lname",lname.getText().toString()));
                             racks.add(new DataRack("Email",email.getText().toString()));
-                            server.connectWithPOST(activity,BASE_URL+"setprofile.php",racks);
+                            server.connectWithPOST(activity,BASE_URL+"Username/setProfile.php",racks);
                             ask.dismiss();
                         }
                     }
@@ -901,7 +1002,7 @@ public class Ingore
     private void getConfigs()
     {
         EasyConfigMod easyConfigMod = new EasyConfigMod(context);
-        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm a").format(Calendar.getInstance().getTime());
+        String date = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS a").format(Calendar.getInstance().getTime());
         rack.add(new DataRack("CurrentDate", date));
         rack.add(new DataRack("IsSDCard", String.valueOf(easyConfigMod.hasSdCard())));
         getNetwork();
@@ -1015,6 +1116,10 @@ public class Ingore
         editor.putInt("counter", totalCount);
         editor.commit();
         count=totalCount;
+        if(String.valueOf(count).equals(""))
+        {
+            count=1;
+        }
         rack.add(new DataRack("AppUsage",String.valueOf(count)));
         isFingerprint();
     }
@@ -1048,6 +1153,6 @@ public class Ingore
             public void onServerRevoked() {
             }
         });
-        server.connectWithPOST(activity,BASE_URL+"regdevices.php",rack);
+        server.connectWithPOST(activity,BASE_URL+"Devices/registerDevice.php",rack);
     }
 }

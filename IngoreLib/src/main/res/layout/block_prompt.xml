@@ -17,10 +17,10 @@
             android:id="@+id/imageView"
             android:layout_width="match_parent"
             android:layout_height="85dp"
-            android:src="@drawable/poison" />
+            android:src="@drawable/blocked" />
         <TextView
             android:textStyle="bold"
-            android:textColor="#ff3c00"
+            android:textColor="#ff5e00"
             android:gravity="center"
             android:layout_gravity="center"
             android:id="@+id/textView"
@@ -30,7 +30,7 @@
             android:text="SORRY YOU ARE BANNED"
             android:textSize="18dp"/>
         <TextView
-            android:textSize="12dp"
+            android:textSize="10dp"
             android:textColor="#d4d3d3"
             android:gravity="center"
             android:id="@+id/updatetext"
@@ -42,7 +42,10 @@
             android:text="The developer of this application blocks this app from running on this device. The reason for blocking is reported as" />
 
         <TextView
-            android:textColor="#ffffff"
+            android:background="#11000000"
+            android:textStyle="bold"
+            android:padding="10dp"
+            android:textColor="#bbff00"
             android:gravity="center"
             android:id="@+id/reason"
             android:layout_width="match_parent"
@@ -59,7 +62,7 @@
             android:layout_marginEnd="16dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
-            android:background="#01a30b"
+            android:background="#313e29"
             android:text="CONTACT DEVELOPER (WhatsApp)"
             android:textColor="#fff" />
         <Button

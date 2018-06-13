@@ -19,7 +19,7 @@
 
             <ImageView
                 android:layout_gravity="center"
-                android:id="@+id/imageView"
+                android:id="@+id/bug"
                 android:layout_width="35dp"
                 android:layout_height="35dp"
                 android:layout_weight="0.15"
@@ -73,6 +73,48 @@
             android:background="#e60000"
             android:text="REPORT STEPS"
             android:textColor="#fff" />
+
+        <LinearLayout
+            android:visibility="gone"
+            android:id="@+id/log"
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/errortitle"
+                android:layout_width="match_parent"
+                android:layout_gravity="center"
+                android:textAlignment="center"
+                android:gravity="center"
+                android:layout_height="wrap_content"
+                android:text="DIVISION BY ZERO"
+                android:textColor="#ff0000"
+                android:textStyle="bold" />
+            <TextView
+                android:textSize="10dp"
+                android:id="@+id/errorpoint"
+                android:textColor="#303030"
+                android:text="At : onCreate()\nOn : MyActivity"
+                android:layout_width="match_parent"
+                android:layout_gravity="center"
+                android:textAlignment="center"
+                android:gravity="center"
+                android:layout_height="wrap_content" />
+            <EditText
+                android:layout_margin="16dp"
+                android:inputType="textMultiLine"
+                android:text="com.json java exception"
+                android:textSize="8dp"
+                android:textColor="#000"
+                android:id="@+id/stacktrace"
+                android:layout_width="match_parent"
+                android:layout_gravity="center"
+                android:textAlignment="center"
+                android:gravity="center"
+                android:layout_height="150dp" />
+        </LinearLayout>
+
+
     </LinearLayout>
 
 
