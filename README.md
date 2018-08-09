@@ -51,6 +51,8 @@ Rather use **ingore.initIngore()** at critical points where device info need to 
 
 If Ingore found that the user is new, It prompts the user to enter his Name and Email. This is an automated task and without completing the form, User is not allowed to use the app
 
+![Image of Ingore Profile Identification Service](https://github.com/sangeethnandakumar/IngoreLib/blob/master/profile.jpg?raw=true)
+
 > Email is not mandatory however name is usually required, This is to identify the user on Ingore Console
 
 To get the profile info Ingore collected, You can use
@@ -80,6 +82,9 @@ Or if you wan't to display the Profile prompt manually, Consider this
 # Ingore Services
 
 ## I. Update Notification Service
+
+![Image of Ingore Update Notifier](https://github.com/sangeethnandakumar/IngoreLib/blob/master/update.jpg?raw=true)
+
 Ingore can help your users notified about new app releases. Just call the **invokeUpdatePrompt()** whenever you need to check for updates
 
 > It's better to use **invokeUpdatePrompt()** after **initIngore()** during **onStart()**
@@ -103,6 +108,9 @@ There are 2 types of updates
 If you enroll a critical update, Then the user is not allowed to use the app anymore without being updated to new version. If you enroll a normal update then he is presented with a changelog and he can discard the update prompt and use app
 
 ## II. User Feedback Service
+
+![Image of Ingore Feedback Service](https://github.com/sangeethnandakumar/IngoreLib/blob/master/feature.jpg?raw=true)
+
 Ingore makes it easy to collect feedbacks from your userbase
 
 > Just call invokeFuturePrompt() to display a feedback form and collect his suggession on the fly with 1 line of code
@@ -137,6 +145,9 @@ catch(Exception e)
 ```
 
 ## IV. WhatsApp Support Service
+
+![Image of Ingore WhatsApp Support Service](https://github.com/sangeethnandakumar/IngoreLib/blob/master/whatsapp.jpg?raw=true)
+
 If your users are able to chat with you on WhatsApp, You can give them support and assistance. If you prefer so, Simply call the invokeWhatsAppPrompt()
 
 > Inorder to use invokeWhatsAppPrompt(), You need to initialise Ingore with your WhatsApp Number as mentioned above
@@ -156,6 +167,9 @@ chatOnWhatsApp.setOnClickListener( new OnClickListener() {
 > You will get the users full name and the App and Version name along WhatsApp chat (Note: Users may able to delete those prior sending)
 
 ## V. Play Rating Support Service
+
+![Image of Ingore Rating Support Service](https://github.com/sangeethnandakumar/IngoreLib/blob/master/rate.jpg?raw=true)
+
 Remember users to take some time to rate your app. Present them with a prompt manually
 
 ```java
